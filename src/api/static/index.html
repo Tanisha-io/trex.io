@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Voice emotion interface</title>
+  <style>
+    :root {
+      --bg: #071018;
+      --panel: #0c1826;
+      --line: #1c3c56;
+      --text: #e7f2fa;
+      --muted: #8aa4b8;
+      --cyan: #3ec6ff;
+      --gold: #f0c14a;
+      --dim: #13283a;
+    }
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      background:
+        radial-gradient(900px 420px at 50% 0%, rgba(40, 110, 150, 0.18), transparent 60%),
+        var(--bg);
+      font: 15px/1.4 "Segoe UI", sans-serif;
+    }
+    main { max-width: 1440px; margin: 0 auto; padding: 18px 16px 28px; }
+    header {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      align-items: flex-end;
+      margin-bottom: 14px;
+    }
+    .kicker {
+      margin: 0 0 4px;
+      color: var(--cyan);
+      font-size: 11px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+    h1 { margin: 0; font-size: 28px; font-weight: 620; letter-spacing: -0.02em; }
+    .lede { margin: 4px 0 0; color: var(--muted); max-width: 62ch; }
+    form { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; justify-content: flex-end; }
+    label { display: flex; flex-direction: column; gap: 4px; color: var(--muted); font-size: 11px; letter-spacing: 0.04em; }
+    select, input, button { font: 14px/1.2 "Segoe UI", sans-serif; color: var(--text); }
+    select, input[type="file"] {
+      background: #09131f;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px 10px;
+    }
+    button {
+      background: var(--gold);
+      color: #1a1408;
+      border: 0;
+      border-radius: 8px;
+      padding: 9px 12px;
+      font-weight: 650;
+      cursor: pointer;
+    }
+    button.ghost { background: transparent; color: var(--text); border: 1px solid var(--line); font-weight: 500; }
+    button:disabled { cursor: wait; opacity: 0.7; }
+    .error { color: #ff8d78; margin: 0 0 10px; }
+    .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 0 0 12px; }
+    .compare .mark { margin: 0; font-size: 28px; font-weight: 650; letter-spacing: -0.03em; }
+    @media (max-width: 1100px) { .compare { grid-template-columns: 1fr; } }
+    .loading {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0 0 12px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #0c1826;
+    }
+    .spin {
+      width: 16px;
+      height: 16px;
+      border: 2px solid #1c3c56;
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .board {
+      display: grid;
+      grid-template-columns: 300px minmax(0, 1fr) 320px;
+      grid-template-areas:
+        "detect field decision"
+        "families field decision"
+        "transcript transcript transcript"
+        "textscore textscore fused"
+        "profiles profiles profiles"
+        "features features features"
+        "kdes kdes kdes";
+      gap: 12px;
+    }
+    @media (max-width: 1100px) {
+      header { flex-direction: column; align-items: stretch; }
+      form { justify-content: flex-start; }
+      .board {
+        grid-template-columns: 1fr;
+        grid-template-areas: "detect" "field" "decision" "families" "transcript" "textscore" "fused" "profiles" "features" "kdes";
+      }
+      .feature-grid { grid-template-columns: 1fr; }
+    }
+    .panel {
+      background: linear-gradient(180deg, rgba(20, 42, 62, 0.55), rgba(12, 24, 38, 0.94));
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+      min-width: 0;
+    }
+    .detect { grid-area: detect; }
+    .field { grid-area: field; display: flex; flex-direction: column; }
+    .decision { grid-area: decision; }
+    .families { grid-area: families; }
+    .transcript { grid-area: transcript; }
+    .textscore { grid-area: textscore; }
+    .fused { grid-area: fused; }
+    .profiles { grid-area: profiles; }
+    .features { grid-area: features; }
+    .kdes { grid-area: kdes; }
+    .said {
+      margin: 8px 0 0;
+      max-height: 380px;
+      overflow-y: auto;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #0c1826;
+      font-size: 16px;
+      line-height: 1.55;
+    }
+    h2 {
+      display: flex;
+      gap: 8px;
+      align-items: baseline;
+      margin: 0 0 8px;
+      color: #b7c9d6;
+      font-size: 12px;
+      font-weight: 650;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+    h2 span { color: var(--cyan); font-variant-numeric: tabular-nums; }
+    .hint { margin: 0 0 10px; color: var(--muted); font-size: 12px; }
+    .big {
+      margin: 0;
+      font-size: 40px;
+      line-height: 1;
+      font-weight: 650;
+      letter-spacing: -0.03em;
+      text-transform: capitalize;
+    }
+    .conf { margin: 6px 0 0; font-size: 22px; font-variant-numeric: tabular-nums; }
+    .meta, .chip { margin: 6px 0 0; color: var(--muted); font-size: 13px; }
+    .chip b { color: var(--text); font-weight: 600; text-transform: capitalize; }
+    .bars { margin-top: 14px; }
+    .bar-row {
+      display: grid;
+      grid-template-columns: 78px 1fr 40px;
+      gap: 8px;
+      align-items: center;
+      margin: 5px 0;
+      font-size: 13px;
+    }
+    .bar-row.hit { background: rgba(62, 198, 255, 0.06); border-radius: 6px; }
+    .bar-row b { font-weight: 600; text-transform: capitalize; }
+    .track { height: 8px; background: #132536; border-radius: 99px; overflow: hidden; }
+    .fill { height: 100%; border-radius: 99px; }
+    .num { text-align: right; font-variant-numeric: tabular-nums; color: #d5e4ee; }
+    svg.field-map { width: 100%; height: auto; display: block; }
+    .heat {
+      display: grid;
+      gap: 4px;
+      margin-top: 4px;
+    }
+    .heat .lab, .heat .head {
+      font-size: 11px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+    }
+    .heat .head { justify-content: center; text-transform: capitalize; min-height: 28px; text-align: center; }
+    .heat .cell {
+      min-height: 30px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-variant-numeric: tabular-nums;
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .stat {
+      background: var(--dim);
+      border-radius: 10px;
+      padding: 8px 10px;
+    }
+    .stat b { display: block; font-size: 20px; font-variant-numeric: tabular-nums; }
+    .stat span { color: var(--muted); font-size: 12px; }
+    .contrib { margin: 7px 0; }
+    .contrib p { margin: 0 0 3px; font-size: 12px; color: #d5e4ee; }
+    .split { display: grid; grid-template-columns: 1fr 1fr; height: 7px; background: #132536; border-radius: 99px; overflow: hidden; }
+    .split i { display: block; height: 100%; }
+    .neg { display: flex; justify-content: flex-end; }
+    .pos { display: flex; justify-content: flex-start; }
+    .cues { margin: 12px 0 0; padding: 0; list-style: none; }
+    .cues li { margin: 0 0 8px; color: #d5e4ee; font-size: 13px; }
+    .family-grid, .chart-grid, .feature-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px; }
+    .tabs button { background: transparent; color: var(--text); border: 1px solid var(--line); font-size: 12px; font-weight: 600; }
+    .tabs button.on { background: var(--gold); color: #1a1408; border-color: var(--gold); }
+    .chart-card h3 { margin: 0 0 2px; font-size: 13px; font-weight: 650; text-transform: capitalize; }
+    .chart-card p { margin: 0 0 2px; color: var(--muted); font-size: 12px; }
+    .legend { display: flex; gap: 16px; margin-top: 8px; color: var(--muted); font-size: 12px; }
+    .swatch { display: inline-block; width: 18px; height: 3px; margin-right: 6px; vertical-align: middle; }
+    .note { margin: 10px 0 0; color: var(--muted); font-size: 12px; }
+    svg.trace { width: 100%; height: 84px; margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <p class="kicker">Voice and words</p>
+        <h1>Voice emotion interface</h1>
+        <p class="lede">Score a recording, or open a saved example. The charts place this clip next to each emotion.</p>
+      </div>
+      <form id="form">
+        <label>File
+          <input type="file" name="audio" id="audio" />
+        </label>
+        <button class="ghost" type="submit" id="score">Score file</button>
+        <label>Library emotion
+          <select name="emotion" id="emotion"></select>
+        </label>
+        <label>Library language
+          <select name="language" id="language">
+            <option value="bn">Bengali</option>
+            <option value="en">English</option>
+          </select>
+        </label>
+        <button type="button" id="library">Show library clip</button>
+      </form>
+    </header>
+    <p class="loading" id="loading" hidden><i class="spin"></i><span>Loading</span></p>
+    <p class="error" id="error" hidden></p>
+    <section class="compare" id="compare" hidden>
+      <article class="panel">
+        <h2>Language</h2>
+        <p class="mark" id="cmp-language-mark">—</p>
+        <p class="meta" id="cmp-language-detail"></p>
+      </article>
+      <article class="panel">
+        <h2>Emotion</h2>
+        <p class="mark" id="cmp-emotion-mark">—</p>
+        <p class="meta" id="cmp-emotion-detail"></p>
+      </article>
+    </section>
+    <section class="board" id="result" hidden>
+      <article class="panel detect">
+        <h2>Detection</h2>
+        <p class="big" id="emotion-name">—</p>
+        <p class="conf" id="confidence"></p>
+        <p class="meta" id="head"></p>
+        <p class="meta" id="detected-language"></p>
+        <p class="chip" id="library-label"></p>
+        <div class="bars" id="bars"></div>
+      </article>
+      <article class="panel field">
+        <h2>Emotion field</h2>
+        <p class="hint">A larger node is a stronger guess. The grid compares this clip with the usual value for each emotion.</p>
+        <svg class="field-map" id="field" viewBox="0 0 640 390" role="img" aria-label="Emotion probabilities"></svg>
+        <div class="heat" id="heat"></div>
+      </article>
+      <article class="panel decision">
+        <h2>Why this result</h2>
+        <div class="stats">
+          <div class="stat"><b id="margin">—</b><span>gap to the next guess</span></div>
+          <div class="stat"><b id="hits">—</b><span id="hits-label">measures closest to this emotion</span></div>
+        </div>
+        <p class="hint">What tipped the result. A bar to the right supports the emotion we heard.</p>
+        <div id="contribs"></div>
+        <ul class="cues" id="cues"></ul>
+      </article>
+      <article class="panel families">
+        <h2>Voice qualities</h2>
+        <p class="hint">Blue is the usual value for each emotion. Gold is this clip.</p>
+        <div class="family-grid" id="families"></div>
+      </article>
+      <article class="panel transcript">
+        <h2>Transcript</h2>
+        <p class="hint">What was said. The words are scored on their own. Scroll if the clip is long.</p>
+        <p class="said" id="said">Score a file to hear the words.</p>
+      </article>
+      <article class="panel textscore">
+        <h2>From the words</h2>
+        <p class="big" id="text-emotion">—</p>
+        <p class="conf" id="text-confidence"></p>
+        <p class="meta" id="text-head"></p>
+        <div class="bars" id="text-bars"></div>
+      </article>
+      <article class="panel fused">
+        <h2>Combined score</h2>
+        <p class="big" id="fused-emotion">—</p>
+        <p class="conf" id="fused-confidence"></p>
+        <p class="meta" id="fused-weights"></p>
+        <div class="bars" id="fused-bars"></div>
+      </article>
+      <article class="panel profiles">
+        <h2>Comparison</h2>
+        <p class="hint">Blue is the usual value from the training set. Gold is this clip.</p>
+        <div class="chart-grid" id="charts"></div>
+        <div class="legend">
+          <span><i class="swatch" style="background:#3ec6ff"></i>Emotion average</span>
+          <span><i class="swatch" style="background:#f0c14a"></i>This clip</span>
+        </div>
+        <svg class="trace" id="strip" viewBox="0 0 640 84" hidden role="img" aria-label="Loudness and pitch over the clip"></svg>
+        <p class="note" id="note"></p>
+      </article>
+      <article class="panel features">
+        <h2>Voice measures</h2>
+        <p class="hint" id="feature-hint">The voice measures, grouped. Blue is each emotion. Gold is this clip.</p>
+        <div class="tabs" id="feature-tabs"></div>
+        <div class="feature-grid" id="feature-grid"></div>
+      </article>
+      <article class="panel kdes">
+        <h2>Spread</h2>
+        <p class="hint" id="kde-hint">The ten measures that separate emotions most clearly. Each band is one emotion. The white line is this clip.</p>
+        <div class="legend" id="kde-legend"></div>
+        <div class="feature-grid" id="kde-grid"></div>
+      </article>
+    </section>
+  </main>
+  <script>
+    const emotions = {
+      bn: ["angry", "happy", "natural", "sad", "surprised"],
+      en: ["anger", "disgust", "fear", "happy", "neutral", "sad"],
+    };
+    const COLOR = {
+      angry: "#ff5d4a", anger: "#ff5d4a",
+      happy: "#f0c14a",
+      natural: "#3ec6ff", neutral: "#5ec8ff",
+      sad: "#7aa2ff",
+      surprised: "#c084fc",
+      surprise: "#c084fc",
+      joy: "#f0c14a",
+      love: "#e38bb4",
+      sadness: "#7aa2ff",
+      disgust: "#3ddc97",
+      fear: "#ff8a3d",
+    };
+    const language = document.getElementById("language");
+    const emotion = document.getElementById("emotion");
+
+    function emotionKey(name) {
+      const key = String(name || "").toLowerCase();
+      return ({
+        anger: "angry", angry: "angry",
+        happy: "happy", happiness: "happy", joy: "happy",
+        sad: "sad", sadness: "sad",
+        neutral: "neutral", natural: "neutral",
+        surprised: "surprised", surprise: "surprised",
+      })[key] || key;
+    }
+    const LANGUAGE_LABEL = { en: "English", bn: "Bengali" };
+    let lastDetection = null;
+    let compareWithLibrary = false;
+
+    function fillEmotions() {
+      const previous = emotion.value;
+      emotion.innerHTML = emotions[language.value].map((name) => `<option>${name}</option>`).join("");
+      const wanted = emotionKey(previous);
+      const match = [...emotion.options].find((option) => emotionKey(option.value) === wanted);
+      if (match) emotion.value = match.value;
+    }
+    function clearComparison() {
+      compareWithLibrary = false;
+      document.getElementById("compare").hidden = true;
+    }
+    language.addEventListener("change", () => {
+      fillEmotions();
+      clearComparison();
+    });
+    emotion.addEventListener("change", clearComparison);
+    fillEmotions();
+
+    function esc(value) {
+      return String(value).replace(/[&<>"]/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]));
+    }
+    function colorOf(name) { return COLOR[name] || "#8aa4b8"; }
+    function compact(value) {
+      const abs = Math.abs(value);
+      if (abs >= 100) return value.toFixed(0);
+      if (abs >= 10) return value.toFixed(1);
+      return value.toFixed(2);
+    }
+    function heat(t) {
+      const stops = [[10, 28, 46], [32, 148, 196], [240, 193, 74], [255, 93, 74]];
+      const x = Math.max(0, Math.min(1, t)) * (stops.length - 1);
+      const i = Math.min(stops.length - 2, Math.floor(x));
+      const f = x - i;
+      const rgb = stops[i].map((v, k) => Math.round(v + (stops[i + 1][k] - v) * f));
+      return `rgb(${rgb.join(",")})`;
+    }
+    function ink(t) { return t > 0.62 ? "#1a1408" : "#e7f2fa"; }
+
+    function lineChart(chart, wide) {
+      const names = chart.emotions;
+      const labeled = wide || chart.labeled;
+      const w = wide ? 700 : labeled ? 640 : 280;
+      const h = wide ? 210 : labeled ? 168 : 112;
+      const left = labeled ? 48 : 28;
+      const right = labeled ? 78 : 12;
+      const top = 12;
+      const bottom = labeled ? 34 : 16;
+      const vals = chart.means.concat([chart.clip]).filter((v) => Number.isFinite(v));
+      let min = Math.min(...vals);
+      let max = Math.max(...vals);
+      const pad = (max - min) * 0.16 || 0.35;
+      min -= pad;
+      max += pad;
+      const span = max - min || 1;
+      const x = (i) => left + (i / Math.max(names.length - 1, 1)) * (w - left - right);
+      const y = (v) => top + (1 - (v - min) / span) * (h - top - bottom);
+      const line = chart.means.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
+      const clipY = y(chart.clip);
+      let marks = "";
+      const ticks = [Math.min(...chart.means.concat([chart.clip])), Math.max(...chart.means.concat([chart.clip]))];
+      ticks.forEach((v) => {
+        marks += `<text x="${left - 6}" y="${y(v) + 3}" text-anchor="end" font-size="10" fill="#8aa4b8">${compact(v)}</text>`;
+      });
+      names.forEach((name, i) => {
+        const predicted = name === chart.predicted;
+        marks += `<circle cx="${x(i)}" cy="${y(chart.means[i])}" r="${predicted ? 4.5 : 3}" fill="${colorOf(name)}" />`;
+        if (labeled) {
+          marks += `<text x="${x(i)}" y="${h - 10}" text-anchor="middle" font-size="${predicted ? 12 : 11}" font-weight="${predicted ? 700 : 400}" fill="${colorOf(name)}">${esc(name)}</text>`;
+        }
+      });
+      return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${esc(chart.gloss || chart.name)}">
+        <path d="${line}" fill="none" stroke="#3ec6ff" stroke-width="1.8" />
+        ${marks}
+        <line x1="${left}" y1="${clipY}" x2="${w - right}" y2="${clipY}" stroke="#f0c14a" stroke-dasharray="5 4" stroke-width="1.8" />
+      </svg>`;
+    }
+
+    function clipNote(chart) {
+      const names = chart.emotions;
+      const at = names.indexOf(chart.predicted);
+      if (at < 0 || !Number.isFinite(chart.clip)) return "";
+      const gap = chart.clip - chart.means[at];
+      const scale = Math.max(...chart.means) - Math.min(...chart.means) || 1;
+      const where = Math.abs(gap) < scale * 0.12 ? "matches" : gap > 0 ? "is above" : "is below";
+      return `This clip ${where} the ${chart.predicted} average`;
+    }
+
+    function drawField(data, ordered) {
+      const svg = document.getElementById("field");
+      const cx = 320, cy = 188, orbit = 118;
+      const ring = 2 * Math.PI * 56;
+      const dash = ring * data.confidence;
+      let nodes = "";
+      ordered.forEach((item, i) => {
+        const angle = -Math.PI / 2 + (i * 2 * Math.PI) / ordered.length;
+        const nx = cx + Math.cos(angle) * orbit;
+        const ny = cy + Math.sin(angle) * orbit;
+        const lx = cx + Math.cos(angle) * (orbit + 46);
+        const ly = cy + Math.sin(angle) * (orbit + 46);
+        const anchor = Math.cos(angle) > 0.35 ? "start" : Math.cos(angle) < -0.35 ? "end" : "middle";
+        const radius = 12 + item.probability * 24;
+        const tone = colorOf(item.label);
+        const hit = item.label === data.emotion;
+        nodes += `<line x1="${cx}" y1="${cy}" x2="${nx}" y2="${ny}" stroke="${tone}" stroke-opacity="${0.2 + item.probability * 0.75}" stroke-width="${1 + item.probability * 3.2}" />`;
+        nodes += `<circle cx="${nx}" cy="${ny}" r="${radius + (hit ? 6 : 0)}" fill="none" stroke="${tone}" stroke-opacity="${hit ? 0.9 : 0.25}" />`;
+        nodes += `<circle cx="${nx}" cy="${ny}" r="${radius}" fill="${tone}" fill-opacity="${0.22 + item.probability * 0.78}" stroke="${tone}" />`;
+        nodes += `<text x="${lx}" y="${ly}" text-anchor="${anchor}" font-size="13" fill="${hit ? tone : "#d5e4ee"}">${esc(item.label)}</text>`;
+        nodes += `<text x="${lx}" y="${ly + 14}" text-anchor="${anchor}" font-size="11" fill="#8aa4b8">${item.probability.toFixed(2)}</text>`;
+      });
+      svg.innerHTML = `
+        <defs>
+          <radialGradient id="glow" cx="50%" cy="48%" r="55%">
+            <stop offset="0%" stop-color="#18445f" />
+            <stop offset="68%" stop-color="#0c1826" stop-opacity="0" />
+          </radialGradient>
+          <pattern id="dots" width="16" height="16" patternUnits="userSpaceOnUse">
+            <circle cx="1" cy="1" r="0.8" fill="#1c3c56" />
+          </pattern>
+        </defs>
+        <rect width="640" height="390" fill="url(#dots)" />
+        <rect width="640" height="390" fill="url(#glow)" />
+        <circle cx="${cx}" cy="${cy}" r="150" fill="none" stroke="#1c3c56" />
+        <circle cx="${cx}" cy="${cy}" r="92" fill="none" stroke="#1c3c56" />
+        ${nodes}
+        <circle cx="${cx}" cy="${cy}" r="56" fill="#0c1826" stroke="#1c3c56" />
+        <circle cx="${cx}" cy="${cy}" r="56" fill="none" stroke="${colorOf(data.emotion)}" stroke-width="4"
+          stroke-dasharray="${dash.toFixed(1)} ${(ring - dash).toFixed(1)}" transform="rotate(-90 ${cx} ${cy})" />
+        <text x="${cx}" y="${cy - 2}" text-anchor="middle" font-size="18" font-weight="650" fill="${colorOf(data.emotion)}">${esc(data.emotion)}</text>
+        <text x="${cx}" y="${cy + 18}" text-anchor="middle" font-size="12" fill="#8aa4b8">${(data.confidence * 100).toFixed(0)}%</text>`;
+    }
+
+    function drawHeat(data) {
+      const host = document.getElementById("heat");
+      const names = data.profiles[0] ? data.profiles[0].emotions : [];
+      host.style.gridTemplateColumns = `132px repeat(${names.length + 1}, minmax(0, 1fr))`;
+      let html = `<div></div>`;
+      names.forEach((name) => {
+        html += `<div class="head" style="color:${name === data.emotion ? colorOf(name) : "#8aa4b8"}">${esc(name)}</div>`;
+      });
+      html += `<div class="head" style="color:#f0c14a">clip</div>`;
+      data.profiles.forEach((chart) => {
+        const vals = chart.means.concat([chart.clip]);
+        const min = Math.min(...vals);
+        const max = Math.max(...vals);
+        const span = max - min || 1;
+        html += `<div class="lab">${esc(chart.gloss)}</div>`;
+        chart.means.forEach((value, i) => {
+          const t = (value - min) / span;
+          const mark = names[i] === data.emotion ? "box-shadow:inset 0 0 0 1px rgba(255,255,255,0.45);" : "";
+          html += `<div class="cell" style="background:${heat(t)};color:${ink(t)};${mark}">${compact(value)}</div>`;
+        });
+        const clipT = (chart.clip - min) / span;
+        html += `<div class="cell" style="background:${heat(clipT)};color:${ink(clipT)};box-shadow:inset 0 0 0 1.5px #f0c14a">${compact(chart.clip)}</div>`;
+      });
+      host.innerHTML = html;
+    }
+
+    function drawStrip(frames) {
+      const svg = document.getElementById("strip");
+      if (!frames || !frames.loudness || !frames.loudness.length) {
+        svg.hidden = true;
+        return;
+      }
+      svg.hidden = false;
+      const path = (values, y0) => {
+        const max = Math.max(...values.map((v) => Math.abs(v)), 1e-6);
+        const span = Math.max(values.length - 1, 1);
+        return values.map((v, i) => {
+          const x = (i / span) * 620 + 10;
+          const y = y0 - (v / max) * 26;
+          return `${i ? "L" : "M"}${x.toFixed(1)},${y.toFixed(1)}`;
+        }).join(" ");
+      };
+      svg.innerHTML =
+        `<text x="10" y="14" font-size="11" fill="#8aa4b8">Loudness</text>` +
+        `<path d="${path(frames.loudness, 34)}" fill="none" stroke="#f0c14a" stroke-width="1.5" />` +
+        `<text x="10" y="52" font-size="11" fill="#8aa4b8">Pitch</text>` +
+        `<path d="${path(frames.pitch, 74)}" fill="none" stroke="#3ec6ff" stroke-width="1.5" />`;
+    }
+
+    function render(data) {
+      document.getElementById("error").hidden = true;
+      document.getElementById("result").hidden = false;
+      const tone = colorOf(data.emotion);
+      const name = document.getElementById("emotion-name");
+      name.textContent = data.emotion;
+      name.style.color = tone;
+      document.getElementById("confidence").textContent = `${(data.confidence * 100).toFixed(1)}% confidence`;
+      document.getElementById("confidence").style.color = tone;
+      document.getElementById("head").textContent = data.runner_up ? `Next closest: ${data.runner_up}` : "";
+      document.getElementById("library-label").innerHTML = data.true_label
+        ? `Library label <b>${esc(data.true_label)}</b>`
+        : "";
+      const score = Object.fromEntries(data.probabilities.map((p) => [p.label, p.probability]));
+      const order = (data.profiles[0] ? data.profiles[0].emotions : data.probabilities.map((p) => p.label));
+      const ordered = order.map((label) => ({ label, probability: score[label] || 0 }));
+      document.getElementById("bars").innerHTML = ordered.map((p) => `
+        <div class="bar-row${p.label === data.emotion ? " hit" : ""}">
+          <b style="color:${colorOf(p.label)}">${esc(p.label)}</b>
+          <div class="track"><div class="fill" style="width:${(p.probability * 100).toFixed(1)}%;background:${colorOf(p.label)}"></div></div>
+          <span class="num">${p.probability.toFixed(2)}</span>
+        </div>`).join("");
+      drawField(data, ordered);
+      drawHeat(data);
+      document.getElementById("margin").textContent = data.margin.toFixed(2);
+      document.getElementById("hits").textContent = `${data.profile_hits}/${data.profiles.length}`;
+      document.getElementById("hits-label").textContent = `measures closest to ${data.emotion}`;
+      const maxAbs = Math.max(...data.contributions.map((c) => Math.abs(c.value)), 1e-6);
+      document.getElementById("contribs").innerHTML = data.contributions.map((c) => {
+        const width = (Math.abs(c.value) / maxAbs) * 100;
+        const side = c.value >= 0 ? "pos" : "neg";
+        return `<div class="contrib">
+          <p>${esc(c.gloss)}</p>
+          <div class="split">
+            <div class="neg">${side === "neg" ? `<i style="width:${width.toFixed(1)}%;background:#7aa2ff"></i>` : ""}</div>
+            <div class="pos">${side === "pos" ? `<i style="width:${width.toFixed(1)}%;background:${tone}"></i>` : ""}</div>
+          </div>
+        </div>`;
+      }).join("");
+      document.getElementById("cues").innerHTML = data.cues.map((c) => `<li>${esc(c.sentence)}</li>`).join("");
+      document.getElementById("families").innerHTML = data.families.map((chart) => `
+        <div class="chart-card">
+          <h3>${esc(chart.name)}</h3>
+          <p>${esc(clipNote(chart))}</p>
+          ${lineChart({ ...chart, predicted: data.emotion }, false)}
+        </div>`).join("");
+      document.getElementById("charts").innerHTML = data.profiles.map((chart) => `
+        <div class="chart-card">
+          <h3>${esc(chart.gloss)}</h3>
+          <p>${esc(clipNote(chart))}</p>
+          ${lineChart(chart, true)}
+        </div>`).join("");
+      drawStrip(data.frames);
+      const said = document.getElementById("said");
+      said.textContent = data.transcript || "Score a file to hear the words.";
+      fillScore("text-emotion", "text-confidence", "text-head", "text-bars", data.text_emotion, data.text_emotion ? "From the words" : "");
+      const fusion = data.fusion;
+      fillScore("fused-emotion", "fused-confidence", "fused-weights", "fused-bars", fusion, fusion ? `voice ${(fusion.voice_weight * 100).toFixed(0)}% · words ${(fusion.text_weight * 100).toFixed(0)}%` : "");
+      document.getElementById("note").textContent = data.note || "";
+      drawFeatures(data);
+      drawKdes(data);
+      const detectedLine = document.getElementById("detected-language");
+      if (data.detected) {
+        lastDetection = data.detected;
+        compareWithLibrary = false;
+        const label = LANGUAGE_LABEL[data.detected.language] || data.detected.language_label || data.detected.language;
+        const probability = Number.isFinite(data.detected.language_probability)
+          ? ` ${(data.detected.language_probability * 100).toFixed(0)}%` : "";
+        detectedLine.textContent = `Detected language ${label}${probability}`;
+      } else {
+        detectedLine.textContent = "";
+      }
+      paintComparison();
+    }
+
+    function paintComparison() {
+      const panel = document.getElementById("compare");
+      if (!compareWithLibrary || !lastDetection) {
+        panel.hidden = true;
+        return;
+      }
+      panel.hidden = false;
+      const detectedLanguage = LANGUAGE_LABEL[lastDetection.language] || lastDetection.language_label || lastDetection.language;
+      const setLanguage = LANGUAGE_LABEL[language.value] || language.value;
+      const languageMatch = lastDetection.language === language.value;
+      const languageMark = document.getElementById("cmp-language-mark");
+      languageMark.textContent = languageMatch ? "Same" : "Different";
+      languageMark.style.color = languageMatch ? "#3ddc97" : "#ff5d4a";
+      const probability = Number.isFinite(lastDetection.language_probability)
+        ? `, ${(lastDetection.language_probability * 100).toFixed(0)}%` : "";
+      document.getElementById("cmp-language-detail").textContent = `Detected ${detectedLanguage}${probability}. Library language: ${setLanguage}.`;
+      const emotionMark = document.getElementById("cmp-emotion-mark");
+      if (!lastDetection.emotion) {
+        emotionMark.textContent = "—";
+        emotionMark.style.color = "";
+        document.getElementById("cmp-emotion-detail").textContent = "No emotion model for this detected language.";
+        return;
+      }
+      const emotionMatch = emotionKey(lastDetection.emotion) === emotionKey(emotion.value);
+      emotionMark.textContent = emotionMatch ? "Same" : "Different";
+      emotionMark.style.color = emotionMatch ? "#3ddc97" : "#ff5d4a";
+      document.getElementById("cmp-emotion-detail").textContent = `Detected ${lastDetection.emotion}. Library emotion: ${emotion.value}.`;
+    }
+
+    let featureGroup = 0;
+
+    function drawFeatures(data) {
+      const groups = data.groups || [];
+      const total = groups.reduce((sum, group) => sum + group.charts.length, 0);
+      document.getElementById("feature-hint").textContent = `${total} voice measures, grouped. Blue is each emotion. Gold is this clip.`;
+      if (featureGroup >= groups.length) featureGroup = 0;
+      const tabs = document.getElementById("feature-tabs");
+      tabs.innerHTML = groups.map((group, index) => `<button type="button" class="${index === featureGroup ? "on" : ""}" data-group="${index}">${esc(group.name)}</button>`).join("");
+      tabs.querySelectorAll("button").forEach((button) => {
+        button.addEventListener("click", () => {
+          featureGroup = Number(button.dataset.group);
+          drawFeatures(data);
+        });
+      });
+      const group = groups[featureGroup];
+      document.getElementById("feature-grid").innerHTML = group ? group.charts.map((chart) => `
+        <div class="chart-card">
+          <h3>${esc(chart.gloss)}</h3>
+          <p>${esc(clipNote({ ...chart, labeled: true }))}</p>
+          ${lineChart({ ...chart, labeled: true }, false)}
+        </div>`).join("") : "";
+    }
+
+    function kdeChart(plot, predicted) {
+      const curves = plot.curves;
+      const n = curves.length;
+      const w = 680;
+      const row = 36;
+      const left = 100;
+      const right = 18;
+      const top = 6;
+      const bottom = 28;
+      const h = top + n * row + bottom;
+      const xs = plot.x;
+      const lo = xs[0];
+      const hi = xs[xs.length - 1];
+      const span = hi - lo || 1;
+      const xOf = (value) => left + ((value - lo) / span) * (w - left - right);
+      let shapes = "";
+      curves.forEach((curve, index) => {
+        const peak = Math.max(...curve.y, 1e-9);
+        const base = top + (index + 1) * row - 4;
+        const amp = row - 12;
+        const yOf = (value) => base - (value / peak) * amp;
+        const line = curve.y.map((value, point) => `${point ? "L" : "M"}${xOf(xs[point]).toFixed(1)},${yOf(value).toFixed(1)}`).join(" ");
+        const area = `${line} L${xOf(hi).toFixed(1)},${base} L${xOf(lo).toFixed(1)},${base} Z`;
+        const color = colorOf(curve.emotion);
+        const hit = curve.emotion === predicted;
+        shapes += `<line x1="${left}" y1="${base}" x2="${w - right}" y2="${base}" stroke="#1c3c56" stroke-width="1" />`;
+        shapes += `<path d="${area}" fill="${color}" fill-opacity="${hit ? 0.5 : 0.28}" />`;
+        shapes += `<path d="${line}" fill="none" stroke="${color}" stroke-width="${hit ? 2.2 : 1.35}" />`;
+        shapes += `<text x="${left - 10}" y="${base - 10}" text-anchor="end" font-size="12" font-weight="${hit ? 700 : 500}" fill="${color}">${esc(curve.emotion)}</text>`;
+      });
+      const clipX = Math.max(left, Math.min(w - right, xOf(plot.clip)));
+      const showClip = clipX - left > 42 && (w - right) - clipX > 42;
+      return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${esc(plot.gloss)} density">
+        ${shapes}
+        <line x1="${clipX}" y1="${top}" x2="${clipX}" y2="${h - bottom + 2}" stroke="#e7f2fa" stroke-dasharray="3 3" stroke-width="1.5" />
+        <text x="${left}" y="${h - 6}" font-size="11" fill="#8aa4b8">${compact(lo)}</text>
+        ${showClip ? `<text x="${clipX}" y="${h - 6}" text-anchor="middle" font-size="11" fill="#e7f2fa">${compact(plot.clip)}</text>` : ""}
+        <text x="${w - right}" y="${h - 6}" text-anchor="end" font-size="11" fill="#8aa4b8">${compact(hi)}</text>
+      </svg>`;
+    }
+
+    function drawKdes(data) {
+      const plots = data.kdes || [];
+      document.getElementById("kde-hint").textContent = "The ten measures that separate emotions most clearly. Each band is one emotion. The white line is this clip.";
+      document.getElementById("kde-legend").innerHTML = `<span><i class="swatch" style="background:#e7f2fa"></i>This clip</span><span>The emotion we heard is drawn heavier.</span>`;
+      document.getElementById("kde-grid").innerHTML = plots.map((plot) => `
+        <div class="chart-card">
+          <h3>${esc(plot.gloss)}</h3>
+          <p>This clip sits with ${esc(plot.nearest)}</p>
+          ${kdeChart(plot, data.emotion)}
+        </div>`).join("");
+    }
+
+    function fillScore(nameId, confId, headId, barsId, block, head) {
+      const name = document.getElementById(nameId);
+      const conf = document.getElementById(confId);
+      const headEl = document.getElementById(headId);
+      const bars = document.getElementById(barsId);
+      if (!block) {
+        name.textContent = "—";
+        name.style.color = "";
+        conf.textContent = "";
+        headEl.textContent = head || "Needs the words.";
+        bars.innerHTML = "";
+        return;
+      }
+      name.textContent = block.emotion;
+      name.style.color = colorOf(block.emotion);
+      conf.textContent = `${(block.confidence * 100).toFixed(1)}%`;
+      conf.style.color = colorOf(block.emotion);
+      headEl.textContent = head || "";
+      bars.innerHTML = block.probabilities.map((p) => `
+        <div class="bar-row${p.label === block.emotion ? " hit" : ""}">
+          <b style="color:${colorOf(p.label)}">${esc(p.label)}</b>
+          <div class="track"><div class="fill" style="width:${(p.probability * 100).toFixed(1)}%;background:${colorOf(p.label)}"></div></div>
+          <span class="num">${p.probability.toFixed(2)}</span>
+        </div>`).join("");
+    }
+
+    function fail(message) {
+      const el = document.getElementById("error");
+      el.hidden = false;
+      el.textContent = message;
+    }
+
+    let requestId = 0;
+    let fileActive = false;
+
+    async function loadLibrary(compare) {
+      const id = ++requestId;
+      fileActive = false;
+      compareWithLibrary = Boolean(compare) && Boolean(lastDetection);
+      const res = await fetch(`/api/example?language=${language.value}&emotion=${encodeURIComponent(emotion.value)}`);
+      const data = await res.json();
+      if (id !== requestId) return;
+      if (data.ok === false) fail(data.error);
+      else render(data);
+    }
+
+    const scoreButton = document.getElementById("score");
+    const audioInput = document.getElementById("audio");
+    function setScoring(active) {
+      document.getElementById("loading").hidden = !active;
+      scoreButton.disabled = active;
+      scoreButton.textContent = active ? "Loading" : "Score file";
+      if (active) document.getElementById("error").hidden = true;
+    }
+
+    async function scoreCurrentFile() {
+      if (!audioInput.files || !audioInput.files.length) {
+        fail("Choose a file.");
+        return;
+      }
+      const id = ++requestId;
+      fileActive = true;
+      setScoring(true);
+      try {
+        const body = new FormData();
+        body.set("language", language.value);
+        body.set("audio", audioInput.files[0]);
+        const res = await fetch("/api/analyze", { method: "POST", body });
+        const data = await res.json();
+        if (id !== requestId) return;
+        if (data.ok === false) {
+          fileActive = false;
+          fail(data.error);
+        } else if (!data.emotion) {
+          lastDetection = data.detected || null;
+          compareWithLibrary = false;
+          document.getElementById("compare").hidden = true;
+          document.getElementById("said").textContent = data.transcript || "No words came through.";
+          fail(data.note || "Emotion scoring covers English and Bengali.");
+        } else render(data);
+      } catch (err) {
+        if (id !== requestId) return;
+        fileActive = false;
+        fail("Scoring did not finish. Try the file again.");
+      } finally {
+        if (id === requestId) setScoring(false);
+      }
+    }
+
+    document.getElementById("library").addEventListener("click", () => loadLibrary(true));
+    document.getElementById("form").addEventListener("submit", (event) => {
+      event.preventDefault();
+      if (scoreButton.disabled) return;
+      scoreCurrentFile();
+    });
+    loadLibrary(false);
+  </script>
+</body>
+</html>

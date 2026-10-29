@@ -1,0 +1,52 @@
+# Rows: audio emotions. Columns: text emotions.
+# Values are expert priors; each text column should sum to 1 after load-time normalize.
+# Thesis example: textual disgust -> mix of angry + natural (audio).
+
+english_text_to_crema_d:
+  # text_label: { audio_label: mass }
+  anger: { anger: 0.85, disgust: 0.10, happy: 0.05 }
+  disgust: { anger: 0.55, disgust: 0.25, neutral: 0.20 }
+  fear: { fear: 0.70, sad: 0.20, disgust: 0.10 }
+  happiness: { happy: 0.80, anger: 0.10, neutral: 0.10 }
+  sadness: { sad: 0.80, fear: 0.10, neutral: 0.10 }
+  surprise: { happy: 0.40, fear: 0.35, anger: 0.15, neutral: 0.10 }
+  neutral: { neutral: 0.85, sad: 0.10, happy: 0.05 }
+
+goemotions_to_crema_d:
+  anger: { anger: 0.90, disgust: 0.10 }
+  annoyance: { anger: 0.55, disgust: 0.25, neutral: 0.20 }
+  disapproval: { anger: 0.40, disgust: 0.30, sad: 0.15, neutral: 0.15 }
+  disappointment: { sad: 0.50, disgust: 0.25, anger: 0.15, neutral: 0.10 }
+  disgust: { anger: 0.50, disgust: 0.30, neutral: 0.20 }
+  fear: { fear: 0.75, sad: 0.15, disgust: 0.10 }
+  nervousness: { fear: 0.60, sad: 0.20, neutral: 0.20 }
+  grief: { sad: 0.90, fear: 0.10 }
+  sadness: { sad: 0.85, neutral: 0.15 }
+  remorse: { sad: 0.60, fear: 0.15, neutral: 0.25 }
+  joy: { happy: 0.85, neutral: 0.15 }
+  amusement: { happy: 0.80, neutral: 0.20 }
+  excitement: { happy: 0.70, anger: 0.15, fear: 0.15 }
+  love: { happy: 0.75, neutral: 0.25 }
+  admiration: { happy: 0.50, neutral: 0.50 }
+  gratitude: { happy: 0.55, neutral: 0.45 }
+  optimism: { happy: 0.50, neutral: 0.50 }
+  pride: { happy: 0.55, anger: 0.15, neutral: 0.30 }
+  surprise: { fear: 0.35, happy: 0.35, anger: 0.15, neutral: 0.15 }
+  realization: { surprise: 0.0, neutral: 0.70, fear: 0.15, happy: 0.15 }
+  curiosity: { neutral: 0.60, fear: 0.20, happy: 0.20 }
+  confusion: { fear: 0.35, disgust: 0.20, neutral: 0.45 }
+  caring: { happy: 0.40, sad: 0.20, neutral: 0.40 }
+  desire: { happy: 0.45, anger: 0.20, neutral: 0.35 }
+  embarrassment: { fear: 0.35, sad: 0.35, disgust: 0.15, neutral: 0.15 }
+  approval: { happy: 0.40, neutral: 0.60 }
+  relief: { happy: 0.35, sad: 0.15, neutral: 0.50 }
+  neutral: { neutral: 0.90, sad: 0.05, happy: 0.05 }
+
+bengali_text_to_banglaser:
+  anger: { angry: 0.90, surprised: 0.10 }
+  disgust: { angry: 0.55, natural: 0.45 }
+  joy: { happy: 0.80, surprised: 0.10, natural: 0.10 }
+  sadness: { sad: 0.85, natural: 0.15 }
+  fear: { sad: 0.35, surprised: 0.40, natural: 0.25 }
+  surprise: { surprised: 0.75, happy: 0.15, angry: 0.10 }
+  neutral: { natural: 0.90, sad: 0.10 }

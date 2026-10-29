@@ -1,0 +1,17 @@
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+.env
+.env.*
+
+# Weights, datasets, and recordings stay on the machine.
+# The checkpoints are too large for git, and uploads can contain private clips.
+data/
+uploads/
+models/
+models_final/
+results/
+
+.idea/
+.vscode/

@@ -1,0 +1,65 @@
+# Canonical labels for each unimodal head.
+# Fusion maps text labels into the audio label space of the detected language.
+
+english_text_single:
+  - anger
+  - disgust
+  - fear
+  - happiness
+  - sadness
+  - surprise
+  - neutral
+
+bengali_text_single:
+  - joy
+  - anger
+  - sadness
+  - fear
+  - surprise
+  - disgust
+  - neutral
+
+goemotions:  # 27 + neutral
+  - admiration
+  - amusement
+  - anger
+  - annoyance
+  - approval
+  - caring
+  - confusion
+  - curiosity
+  - desire
+  - disappointment
+  - disapproval
+  - disgust
+  - embarrassment
+  - excitement
+  - fear
+  - gratitude
+  - grief
+  - joy
+  - love
+  - nervousness
+  - optimism
+  - pride
+  - realization
+  - relief
+  - remorse
+  - sadness
+  - surprise
+  - neutral
+
+crema_d:
+  - anger
+  - disgust
+  - fear
+  - happy
+  - neutral
+  - sad
+
+banglaser:
+  - angry
+  - happy
+  - natural
+  - sad
+  - surprised
