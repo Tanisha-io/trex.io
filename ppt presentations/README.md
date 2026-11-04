@@ -1,7 +1,0 @@
-# HiLabs APM case study
-
-APM Case Study 2024 by Tanisha Panda, IIT Kharagpur (20EE38017).
-
-ClaimsGuard uses claims data to score healthcare provider-network disruption risk, alert employers, and recommend ways to limit cost and member-access impact when the network changes.
-
-Deck: [20EE38017_HiLabs.pdf](20EE38017_HiLabs.pdf)
