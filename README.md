@@ -6,4 +6,4 @@ A collection of work across investment research, product strategy, technology, a
 
 - [Audio sentiment analysis](audio-sentiment-analysis/) — English and Bengali emotion from speech and words
 - [LIC valuation](investment-research/lici/) — Life insurer; value sits in embedded value and new business, not a standard industrial multiple
-- [Presentations](presentations/) — HiLabs ClaimsGuard, and a 20-year Mars colonization plan
+- [Presentations](presentations/) — HiLabs ClaimsGuard, a Flipkart Mars case, and a Data Quality Index for real-world evidence
