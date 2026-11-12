@@ -28,13 +28,13 @@ Equity note, 6 November 2024. Price used: INR 301.6. View: buy.
 
 ### About Bharat Electronics Limited (BEL)
 
-Founded in 1954, Bharat Electronics Limited is a public sector undertaking under India’s Ministry of Defence. BEL designs, develops, and manufactures defence and civilian electronics — radars, sonar, communication systems, electronic warfare equipment, and missile systems — with additional work in healthcare and solar. Indigenous R&D and preferential access to government contracts sit at the centre of its franchise.
+Founded in 1954, Bharat Electronics Limited is a public sector undertaking under India’s Ministry of Defence. BEL designs, develops, and manufactures defence and civilian electronics radars, sonar, communication systems, electronic warfare equipment, and missile systems also with additional focus in healthcare and solar. Indigenous research and preferential access to government tenders is at the centre of its franchise.
 
 Roughly 80% of revenue comes from defence electronics (Army, Navy, Air Force contracts); about 20% is non-defence (healthcare, smart cities, homeland security). Domestic peers include HAL and L&T Defence; foreign OEMs compete where policy allows, but localisation rules favour Indian suppliers. BEL’s estimated share of the defence-electronics market is about 12–13%, with a growing order book.
 
 ### Valuation
 
-In FY 2023–24, revenue was INR 19,820 crore (+14.8% YoY) and PAT INR 4,020 crore (+33.7%), with a net profit margin near 20% and low leverage (debt-to-equity ~0.15). A DCF using WACC 6.32% and terminal growth 3% puts intrinsic value around INR 340–380 a share — roughly 20–25% upside versus the then price of INR 301. Trading multiples were rich versus peers (P/E ~55x, EV/EBITDA ~66x), so the case rests on order-book conversion, defence budget growth, and indigenisation rather than on cheap multiples alone.
+In FY 2023–24, revenue was INR 19,820 crore (+14.8% YoY) and PAT INR 4,020 crore (+33.7%), with a net profit margin near 20% and low leverage (debt-to-equity ~0.15). A DCF using WACC 6.32% and terminal growth 3% puts intrinsic value around INR 340–380 share roughly 20–25% upside versus the then price of INR 301. Trading multiples were rich versus peers (P/E ~55x, EV/EBITDA ~66x), so the case rests on order-book conversion, defence budget growth, and indigenisation rather than on cheap multiples alone.
 
 Suggested position size in the note is 5–7% of portfolio for long-term, moderate-risk allocation. The recommendation is a buy.
 
