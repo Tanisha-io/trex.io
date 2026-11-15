@@ -21,8 +21,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# models_final must be in the Space upload (gitignored in trex.io; included by deploy-hf-space.ps1).
+# Weights: either bake models_final into the image, or download at start from MODEL_REPO.
+RUN pip install --no-cache-dir "huggingface_hub>=0.23" \
+    && chmod +x entrypoint.sh
 
 EXPOSE 7860
 
-CMD ["uvicorn", "src.api.app:app", "--host", "0.0.0.0", "--port", "7860"]
+ENV MODEL_REPO=qetzi/voice-emotion-models
+CMD ["./entrypoint.sh"]

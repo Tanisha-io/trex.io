@@ -1,6 +1,6 @@
 # Deploy audio-sentiment-analysis + models_final to a Hugging Face Docker Space.
 # Prerequisites: hf auth login
-# Usage:  powershell -File scripts/deploy-hf-space.ps1
+# Usage:  powershell -ExecutionPolicy Bypass -File scripts/deploy-hf-space.ps1
 # Optional:  -SpaceId "YourHFUser/voice-emotion"
 
 param(
@@ -22,13 +22,17 @@ if ($LASTEXITCODE -ne 0 -or $who -match "Not logged in") {
 Write-Host $who.Trim()
 
 if (-not $SpaceId) {
-  $userLine = (hf auth whoami 2>&1 | Select-String -Pattern "name:\s*(\S+)|^\s*(\S+)\s*$" | Select-Object -First 1)
   $user = $null
   try {
     $json = hf auth whoami --format json 2>$null | ConvertFrom-Json
-    if ($json.name) { $user = $json.name }
+    if ($json.user) { $user = $json.user }
+    elseif ($json.name) { $user = $json.name }
     elseif ($json.fullname) { $user = $json.fullname }
   } catch {}
+  if (-not $user) {
+    # Fallback: first non-empty line from whoami
+    $user = ($who -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ -and $_ -notmatch "hint|error|token" } | Select-Object -First 1)
+  }
   if (-not $user) {
     Write-Host "Could not detect HF username. Pass -SpaceId 'YourUser/voice-emotion'"
     exit 1
@@ -37,7 +41,7 @@ if (-not $SpaceId) {
 }
 
 if (-not (Test-Path $Models)) {
-  Write-Host "Missing models_final at $Models — demo cannot score without weights."
+  Write-Host "Missing models_final at $Models - demo cannot score without weights."
   exit 1
 }
 
@@ -51,9 +55,16 @@ Copy-Item (Join-Path $AppDir "README_SPACE.md") (Join-Path $Staging "README.md")
 
 Write-Host "Creating Space $SpaceId (docker) if needed..."
 hf repos create $SpaceId --type space --sdk docker --public --exist-ok
+if ($LASTEXITCODE -ne 0) {
+  Write-Host "Space create returned exit $LASTEXITCODE (may already exist); continuing upload..."
+}
 
-Write-Host "Uploading (includes models_final, ~2.7GB — may take a while)..."
+Write-Host "Uploading (includes models_final, ~2.7GB - may take a while)..."
 hf upload $SpaceId $Staging . --repo-type space --commit-message "Deploy voice emotion demo"
+if ($LASTEXITCODE -ne 0) {
+  Write-Host "Upload failed with exit $LASTEXITCODE"
+  exit $LASTEXITCODE
+}
 
 $AppUrl = "https://$($SpaceId.Replace('/','-').ToLower()).hf.space"
 Write-Host ""

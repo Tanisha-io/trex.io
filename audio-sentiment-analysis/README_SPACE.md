@@ -4,9 +4,29 @@ sdk: docker
 app_port: 7860
 ---
 
-# Voice emotion (HF Space)
+# Voice emotion (hosted demo)
 
 Lightweight CPU demo of the multilingual emotion UI.
+
+## Hugging Face Space (Docker)
+
+**Note (2025+):** Docker and Gradio Spaces on free `cpu-basic` need a [Hugging Face PRO](https://huggingface.co/pro) plan. Static Spaces stay free but cannot run this API.
+
+With PRO, from the repo root after `hf auth login`:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/deploy-hf-space.ps1 -SpaceId "qetzi/voice-emotion"
+```
+
+Weights can also live in the free model repo `qetzi/voice-emotion-models`; the container downloads them via `entrypoint.sh` if `models_final/` is missing.
+
+## Render / other Docker hosts (alternative)
+
+1. Push this repo to GitHub (already done).
+2. Create a Web Service from `audio-sentiment-analysis/Dockerfile`.
+3. Set env `MODEL_REPO=qetzi/voice-emotion-models` (public download at start).
+4. Give the service enough disk/RAM for ~3GB weights + Whisper (free tiers often OOM — a small paid instance is safer).
+5. Put the public URL in `../demo-config.js` as `EMOTION_DEMO_URL`.
 
 ## Local
 
@@ -16,18 +36,3 @@ pip install -r requirements.txt
 set WHISPER_MODEL=base
 python -m uvicorn src.api.app:app --host 127.0.0.1 --port 8765
 ```
-
-## Deploy (Hugging Face Space)
-
-From the repo root (after `hf auth login`):
-
-```powershell
-powershell -File scripts/deploy-hf-space.ps1
-# or: powershell -File scripts/deploy-hf-space.ps1 -SpaceId "YourHFUser/voice-emotion"
-```
-
-That creates a public Docker Space, uploads this folder + `models_final/` (~2.7GB), and prints the app URL. Put that URL in `../demo-config.js` (`EMOTION_DEMO_URL`) and push so GitHub Pages links to it.
-
-Manual alternative: create a Docker Space, upload this folder + weights, wait for the build on port 7860.
-
-`WHISPER_MODEL` defaults to **base** (lighter than former `small`). Docker sets `WHISPER_BACKEND=faster`. On Windows locally, the app falls back to openai-whisper, or voice-only scoring if Torch/Whisper cannot load.
