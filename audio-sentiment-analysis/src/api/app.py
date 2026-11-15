@@ -45,7 +45,7 @@ async def analyze(
     text: str = Form(""),
     audio: UploadFile | None = File(None),
 ):
-    del language
+    fallback_lang = _supported_language(language) or "bn"
     if audio is None or not audio.filename:
         if text.strip():
             return {
@@ -55,17 +55,23 @@ async def analyze(
         return {"ok": False, "error": "Choose a file that contains sound."}
 
     dest = UPLOADS / Path(audio.filename).name
-    dest.write_bytes(await audio.read())
+    raw = await audio.read()
+    dest.write_bytes(raw)
     wav = UPLOADS / f"{dest.stem}.analysis.wav"
+    trim_note = ""
     try:
-        from src.api.media import to_pcm_wav
+        from src.api.media import MAX_SECONDS, to_pcm_wav
 
         wav = to_pcm_wav(dest, wav)
+        marker = wav.with_suffix(".trim.txt")
+        if marker.exists():
+            trim_note = f" Large media trimmed to first {MAX_SECONDS:.0f}s."
     except Exception:
         return {
             "ok": False,
             "error": "Could not read audio from this file. Use a file that contains sound.",
         }
+
     try:
         from src.audio.features import extract_egemaps
 
@@ -76,42 +82,63 @@ async def analyze(
             "ok": False,
             "error": "Could not read the voice in this file. A library clip still works.",
         }
+
+    asr_note = ""
     try:
         from src.api.asr import transcribe
 
-        heard = transcribe(wav)
-    except Exception:
-        return {
-            "ok": False,
-            "error": "Could not hear the language in this file.",
-        }
-    detected_code = _supported_language(heard["language"])
+        heard = transcribe(wav, language_hint=fallback_lang)
+        detected_code = _supported_language(heard["language"]) or fallback_lang
+        heard_lang = heard["language"] or fallback_lang
+        heard_prob = heard["probability"]
+        transcript = (heard.get("text") or "").strip() or None
+    except Exception as exc:
+        heard_lang = fallback_lang
+        heard_prob = None
+        transcript = text.strip() or None
+        detected_code = fallback_lang
+        asr_note = (
+            f"ASR unavailable ({type(exc).__name__}); "
+            f"scored voice only using language={fallback_lang}."
+        )
+
     detected = {
-        "language": detected_code or heard["language"] or "",
-        "language_label": _language_label(heard["language"]),
-        "language_probability": heard["probability"],
+        "language": detected_code or heard_lang or "",
+        "language_label": _language_label(detected_code or heard_lang),
+        "language_probability": heard_prob,
         "emotion": None,
     }
     if detected_code is None:
         return {
             "ok": True,
             "source": "upload",
-            "transcript": heard["text"] or None,
+            "transcript": transcript,
             "detected": detected,
-            "note": f"Heard {detected['language_label']}. Emotion scoring covers English and Bengali.",
+            "note": f"Heard {detected['language_label']}. Emotion scoring covers English and Bengali." + trim_note,
             "frames": frames,
         }
+
     dataset = "banglaser" if detected_code == "bn" else "crema_d"
     row = pd.Series(values)
     payload = library(dataset).score_row(row)
     payload["source"] = "upload"
     payload["frames"] = frames
     payload["true_label"] = None
-    payload["transcript"] = heard["text"] or None
-    payload["note"] = ""
+    payload["transcript"] = transcript
+    payload["note"] = (asr_note + trim_note).strip()
     if text.strip() and not payload["transcript"]:
         payload["transcript"] = text.strip()
-    _add_text_and_fusion(detected_code, payload)
+
+    if payload.get("transcript"):
+        try:
+            _add_text_and_fusion(detected_code, payload)
+        except Exception:
+            payload["text_emotion"] = None
+            payload["fusion"] = None
+    else:
+        payload["text_emotion"] = None
+        payload["fusion"] = None
+
     detected["emotion"] = payload["emotion"]
     payload["detected"] = detected
     return payload

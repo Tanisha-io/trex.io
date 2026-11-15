@@ -235,11 +235,11 @@
       <div>
         <p class="kicker">Voice and words</p>
         <h1>Voice emotion interface</h1>
-        <p class="lede">Score a recording, or open a saved example. The charts place this clip next to each emotion.</p>
+        <p class="lede">Score a recording, or open a saved example. The charts place this clip next to each emotion. Large videos use the first 90 seconds.</p>
       </div>
       <form id="form">
         <label>File
-          <input type="file" name="audio" id="audio" />
+          <input type="file" name="audio" id="audio" accept="audio/*,video/*" />
         </label>
         <button class="ghost" type="submit" id="score">Score file</button>
         <label>Library emotion
@@ -451,7 +451,7 @@
       return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${esc(chart.gloss || chart.name)}">
         <path d="${line}" fill="none" stroke="#3ec6ff" stroke-width="1.8" />
         ${marks}
-        <line x1="${left}" y1="${clipY}" x2="${w - right}" y2="${clipY}" stroke="#f0c14a" stroke-dasharray="5 4" stroke-width="1.8" />
+        <line x1="${left}" y1="${clipY}" x2="${w - right}" y2="${clipY}" stroke="#f0c14a" stroke-width="1.8" />
       </svg>`;
     }
 
@@ -720,7 +720,7 @@
       const showClip = clipX - left > 42 && (w - right) - clipX > 42;
       return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${esc(plot.gloss)} density">
         ${shapes}
-        <line x1="${clipX}" y1="${top}" x2="${clipX}" y2="${h - bottom + 2}" stroke="#e7f2fa" stroke-dasharray="3 3" stroke-width="1.5" />
+        <line x1="${clipX}" y1="${top}" x2="${clipX}" y2="${h - bottom + 2}" stroke="#e7f2fa" stroke-width="1.5" />
         <text x="${left}" y="${h - 6}" font-size="11" fill="#8aa4b8">${compact(lo)}</text>
         ${showClip ? `<text x="${clipX}" y="${h - 6}" text-anchor="middle" font-size="11" fill="#e7f2fa">${compact(plot.clip)}</text>` : ""}
         <text x="${w - right}" y="${h - 6}" text-anchor="end" font-size="11" fill="#8aa4b8">${compact(hi)}</text>
@@ -778,11 +778,16 @@
       const id = ++requestId;
       fileActive = false;
       compareWithLibrary = Boolean(compare) && Boolean(lastDetection);
-      const res = await fetch(`/api/example?language=${language.value}&emotion=${encodeURIComponent(emotion.value)}`);
-      const data = await res.json();
-      if (id !== requestId) return;
-      if (data.ok === false) fail(data.error);
-      else render(data);
+      try {
+        const res = await fetch(`/api/example?language=${language.value}&emotion=${encodeURIComponent(emotion.value)}`);
+        const data = await res.json();
+        if (id !== requestId) return;
+        if (!res.ok || data.ok === false) fail(data.error || "Library clip could not load. Check that models_final is present and uvicorn is running on this port.");
+        else render(data);
+      } catch (err) {
+        if (id !== requestId) return;
+        fail("Library clip could not load. Open http://127.0.0.1:8765 after starting uvicorn from audio-sentiment-analysis.");
+      }
     }
 
     const scoreButton = document.getElementById("score");
@@ -807,11 +812,16 @@
         body.set("language", language.value);
         body.set("audio", audioInput.files[0]);
         const res = await fetch("/api/analyze", { method: "POST", body });
-        const data = await res.json();
+        let data;
+        try {
+          data = await res.json();
+        } catch (_) {
+          throw new Error("bad-json");
+        }
         if (id !== requestId) return;
-        if (data.ok === false) {
+        if (!res.ok || data.ok === false) {
           fileActive = false;
-          fail(data.error);
+          fail(data.error || "Scoring failed on the server. Check the uvicorn log.");
         } else if (!data.emotion) {
           lastDetection = data.detected || null;
           compareWithLibrary = false;
@@ -822,7 +832,10 @@
       } catch (err) {
         if (id !== requestId) return;
         fileActive = false;
-        fail("Scoring did not finish. Try the file again.");
+        fail(
+          "Scoring did not finish. Use http://127.0.0.1:8765 (uvicorn), not the portfolio static server. " +
+            "Also needs models_final and a file with speech (English or Bengali)."
+        );
       } finally {
         if (id === requestId) setScoring(false);
       }
