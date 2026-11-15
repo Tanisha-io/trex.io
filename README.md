@@ -2,7 +2,7 @@
 
 A collection of work across investment research, product strategy, technology, and data.
 
-**Portfolio UI:** open [index.html](index.html) locally, or enable GitHub Pages on this repo (Settings → Pages → Deploy from `main` / root).
+**Portfolio:** [GitHub Pages](https://tanisha-io.github.io/trex.io/) (or open [index.html](index.html) locally). Emotion demo UI: [audio-sentiment-analysis/demo/](audio-sentiment-analysis/demo/) — live scoring needs local uvicorn or a Hugging Face Space.
 
 ## Projects
 

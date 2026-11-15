@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Emotion Intelligence | Tanisha Panda</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../styles.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="topbar">
+      <a class="brand" href="../">Tanisha Panda</a>
+      <span class="topbar-rule" aria-hidden="true"></span>
+      <span class="project-count">Research &amp; Engineering</span>
+    </header>
+
+    <main>
+      <section class="hero hero-compact">
+        <p class="block-num">03 Research &amp; Engineering</p>
+        <h1>Emotion <em>intelligence</em></h1>
+        <p class="hero-lede">
+          Multilingual emotion from speech and text in English and Bengali — ASR, OpenSMILE and BERT-LSTM.
+        </p>
+        <p class="cta-row">
+          <a class="cta-primary" href="demo/">Open demo UI →</a>
+          <a class="view-all" href="https://github.com/Tanisha-io/trex.io/tree/main/audio-sentiment-analysis" target="_blank" rel="noopener noreferrer">Code on GitHub →</a>
+        </p>
+        <a class="view-all back-link" href="../">← Back to portfolio</a>
+      </section>
+
+      <section class="block is-visible" aria-label="Project">
+        <a class="card card-feature" href="demo/">
+          <div class="card-media card-media-cover">
+            <img src="../assets/emotion.png" alt="Emotion intelligence framework" />
+          </div>
+          <div class="card-body card-body-feature">
+            <div class="feature-copy">
+              <h3>Voice emotion interface</h3>
+              <p class="meta">Master’s Thesis · Aug 2024 to Apr 2025 · Guide: Dr. Nirmalya Ghosh</p>
+              <p class="desc">
+                Open the interactive UI on this site. Live scoring needs the FastAPI backend
+                (<code>models_final/</code> + uvicorn on port 8765), or a Hugging Face Space deploy — see README_SPACE.md.
+              </p>
+            </div>
+            <div class="feature-aside">
+              <ul class="pills">
+                <li>ASR</li>
+                <li>NLP</li>
+                <li>Deep Learning</li>
+              </ul>
+              <span class="card-arrow card-arrow-inline" aria-hidden="true">→</span>
+            </div>
+          </div>
+        </a>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>Tanisha Panda · IIT Kharagpur</p>
+      <a href="../">Portfolio</a>
+    </footer>
+  </div>
+</body>
+</html>
