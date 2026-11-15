@@ -6,6 +6,6 @@ A collection of work across investment research, product strategy, technology, a
 
 ## Projects
 
-- [Audio sentiment analysis](audio-sentiment-analysis/) — English and Bengali emotion from speech and words
+- [Engineering research](engineering-research/) — applied ML and systems (includes [audio sentiment analysis](engineering-research/audio-sentiment-analysis/))
 - [Investment research](investment-research/) — LIC (hold) and BEL (buy) equity notes
 - [Presentations](presentations/) — HiLabs Claims Guard, Flipkart Case Study, and Data Quality Index
