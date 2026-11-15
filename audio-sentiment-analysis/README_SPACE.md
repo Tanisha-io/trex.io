@@ -19,9 +19,15 @@ python -m uvicorn src.api.app:app --host 127.0.0.1 --port 8765
 
 ## Deploy (Hugging Face Space)
 
-1. Create a Docker Space.
-2. Upload this folder + `models_final/` (gitignored in trex.io).
-3. Space builds the Dockerfile and serves on port 7860.
-4. Point the portfolio emotion card at the Space URL.
+From the repo root (after `hf auth login`):
+
+```powershell
+powershell -File scripts/deploy-hf-space.ps1
+# or: powershell -File scripts/deploy-hf-space.ps1 -SpaceId "YourHFUser/voice-emotion"
+```
+
+That creates a public Docker Space, uploads this folder + `models_final/` (~2.7GB), and prints the app URL. Put that URL in `../demo-config.js` (`EMOTION_DEMO_URL`) and push so GitHub Pages links to it.
+
+Manual alternative: create a Docker Space, upload this folder + weights, wait for the build on port 7860.
 
 `WHISPER_MODEL` defaults to **base** (lighter than former `small`). Docker sets `WHISPER_BACKEND=faster`. On Windows locally, the app falls back to openai-whisper, or voice-only scoring if Torch/Whisper cannot load.

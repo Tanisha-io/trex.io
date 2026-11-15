@@ -21,8 +21,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# models_final must be present at build/runtime (HF Space upload or volume).
-# Not copied from git — mount or COPY locally when deploying.
+# models_final must be in the Space upload (gitignored in trex.io; included by deploy-hf-space.ps1).
 
 EXPOSE 7860
 

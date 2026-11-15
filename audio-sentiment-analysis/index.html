@@ -25,24 +25,23 @@
           Multilingual emotion from speech and text in English and Bengali — ASR, OpenSMILE and BERT-LSTM.
         </p>
         <p class="cta-row">
-          <a class="cta-primary" href="demo/">Open demo UI →</a>
+          <a class="cta-primary" data-emotion-demo href="https://tanisha-io-voice-emotion.hf.space" target="_blank" rel="noopener noreferrer">Open live demo →</a>
           <a class="view-all" href="https://github.com/Tanisha-io/trex.io/tree/main/audio-sentiment-analysis" target="_blank" rel="noopener noreferrer">Code on GitHub →</a>
         </p>
         <a class="view-all back-link" href="../">← Back to portfolio</a>
       </section>
 
       <section class="block is-visible" aria-label="Project">
-        <a class="card card-feature" href="demo/">
+        <a class="card card-feature" data-emotion-demo href="https://tanisha-io-voice-emotion.hf.space" target="_blank" rel="noopener noreferrer">
           <div class="card-media card-media-cover">
             <img src="../assets/emotion.png" alt="Emotion intelligence framework" />
           </div>
           <div class="card-body card-body-feature">
             <div class="feature-copy">
-              <h3>Voice emotion interface</h3>
+              <h3>Live voice emotion demo</h3>
               <p class="meta">Master’s Thesis · Aug 2024 to Apr 2025 · Guide: Dr. Nirmalya Ghosh</p>
               <p class="desc">
-                Open the interactive UI on this site. Live scoring needs the FastAPI backend
-                (<code>models_final/</code> + uvicorn on port 8765), or a Hugging Face Space deploy — see README_SPACE.md.
+                The interactive app is hosted on Hugging Face Spaces (not GitHub Pages). Score uploads or library clips there; source and docs stay in this repo.
               </p>
             </div>
             <div class="feature-aside">
@@ -63,5 +62,12 @@
       <a href="../">Portfolio</a>
     </footer>
   </div>
+
+  <script src="../demo-config.js"></script>
+  <script>
+    document.querySelectorAll("[data-emotion-demo]").forEach((el) => {
+      if (window.EMOTION_DEMO_URL) el.href = window.EMOTION_DEMO_URL;
+    });
+  </script>
 </body>
 </html>

@@ -2,7 +2,9 @@
 
 A collection of work across investment research, product strategy, technology, and data.
 
-**Portfolio:** [GitHub Pages](https://tanisha-io.github.io/trex.io/) (or open [index.html](index.html) locally). Emotion demo UI: [audio-sentiment-analysis/demo/](audio-sentiment-analysis/demo/) — live scoring needs local uvicorn or a Hugging Face Space.
+**Portfolio:** [GitHub Pages](https://tanisha-io.github.io/trex.io/) (or open [index.html](index.html) locally).
+
+**Live emotion demo** (hosted separately on Hugging Face): set the URL in [demo-config.js](demo-config.js). Deploy with `powershell -File scripts/deploy-hf-space.ps1` after `hf auth login` (uploads `audio-sentiment-analysis/` + `models_final/`).
 
 ## Projects
 
