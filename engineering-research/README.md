@@ -1,6 +1,6 @@
 # Engineering Research
 
-Applied ML and systems projects.
+Applied machine learning signal processing and system design projects.
 
 ## Projects
 
