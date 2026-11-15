@@ -16,8 +16,6 @@ Open http://127.0.0.1:8765. Score a file that contains sound, or open a library 
 
 ASR uses Whisper **`base`** (lighter than the old `small`). On Windows the app uses **openai-whisper** by default (more stable); Linux/Docker uses **faster-whisper**. Override with `WHISPER_MODEL=tiny|base|small` and `WHISPER_BACKEND=openai|faster`.
 
-For a public demo, see [README_SPACE.md](README_SPACE.md) (Hugging Face Docker Space).
-
 ## Layout
 
 - `src/api` — page

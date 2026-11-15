@@ -21,11 +21,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# Weights: either bake models_final into the image, or download at start from MODEL_REPO.
-RUN pip install --no-cache-dir "huggingface_hub>=0.23" \
-    && chmod +x entrypoint.sh
+# Include models_final/ in the build context when you host the demo later.
 
 EXPOSE 7860
 
-ENV MODEL_REPO=qetzi/voice-emotion-models
-CMD ["./entrypoint.sh"]
+CMD ["uvicorn", "src.api.app:app", "--host", "0.0.0.0", "--port", "7860"]
