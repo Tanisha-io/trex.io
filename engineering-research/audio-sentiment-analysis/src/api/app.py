@@ -10,6 +10,8 @@ from fastapi.staticfiles import StaticFiles
 
 from src import UPLOADS
 from src.api.cues import library
+import opensmile
+import numpy as np
 
 STATIC = Path(__file__).resolve().parent / "static"
 app = FastAPI(title="Voice emotion")
@@ -207,8 +209,7 @@ def _add_text_and_fusion(language: str, payload: dict) -> None:
 
 def _frames(path: Path):
     """Loudness and pitch across the clip, for the small trace under the charts."""
-    import opensmile
-    import numpy as np
+    
 
     smile = opensmile.Smile(
         feature_set=opensmile.FeatureSet.eGeMAPSv02,
