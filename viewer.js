@@ -166,13 +166,32 @@
     if (lastFocus && typeof lastFocus.focus === "function") lastFocus.focus();
   }
 
+  function openDocument(fileName, titleText) {
+    const safeName = String(fileName || "").replace(/^.*[\\/]/, "");
+    if (!safeName) return;
+    const fileUrl = new URL(safeName, window.location.href).href;
+    openViewer(fileUrl, titleText || safeName.replace(/[_-]+/g, " "));
+  }
+
+  function openFromQuery() {
+    const params = new URLSearchParams(window.location.search);
+    const doc = params.get("doc");
+    if (!doc) return;
+    const safeName = String(doc).replace(/^.*[\\/]/, "");
+    const link = document.querySelector('a[data-pdf="' + safeName + '"]');
+    const heading = link && link.querySelector("h3");
+    openDocument(safeName, heading ? heading.textContent.trim() : "");
+  }
+
   document.addEventListener("click", function (event) {
     const link = event.target.closest("a[data-pdf]");
     if (link) {
       event.preventDefault();
       const heading = link.querySelector("h3");
-      const fileUrl = new URL(link.getAttribute("data-pdf"), window.location.href).href;
-      openViewer(fileUrl, heading ? heading.textContent.trim() : "Document");
+      openDocument(
+        link.getAttribute("data-pdf"),
+        heading ? heading.textContent.trim() : "Document"
+      );
       return;
     }
     if (event.target.closest("[data-close]")) closeViewer();
@@ -185,4 +204,6 @@
   pages.addEventListener("contextmenu", function (event) {
     event.preventDefault();
   });
+
+  openFromQuery();
 })();
