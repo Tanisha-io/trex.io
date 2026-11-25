@@ -74,23 +74,56 @@
     pages.appendChild(status);
   }
 
+  function addLinkLayer(page, holder, cssViewport, token) {
+    return page.getAnnotations({ intent: "display" }).then(function (annotations) {
+      if (token !== session) return;
+      const layer = document.createElement("div");
+      layer.className = "viewer-links";
+      annotations.forEach(function (ann) {
+        if (!ann || ann.subtype !== "Link" || !ann.url) return;
+        const rect = cssViewport.convertToViewportRectangle(ann.rect);
+        const left = Math.min(rect[0], rect[2]);
+        const top = Math.min(rect[1], rect[3]);
+        const width = Math.abs(rect[0] - rect[2]);
+        const height = Math.abs(rect[1] - rect[3]);
+        if (width < 2 || height < 2) return;
+        const link = document.createElement("a");
+        link.className = "viewer-link";
+        link.href = ann.url;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.title = ann.url;
+        link.style.left = left + "px";
+        link.style.top = top + "px";
+        link.style.width = width + "px";
+        link.style.height = height + "px";
+        layer.appendChild(link);
+      });
+      if (layer.childNodes.length) holder.appendChild(layer);
+    });
+  }
+
   function paintPage(pdf, pageNumber, holder, cssWidth, token) {
     return pdf.getPage(pageNumber).then(function (page) {
       if (token !== session) return;
       const unscaled = page.getViewport({ scale: 1 });
       const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
-      const viewport = page.getViewport({
-        scale: (cssWidth / unscaled.width) * pixelRatio
-      });
+      const cssScale = cssWidth / unscaled.width;
+      const cssViewport = page.getViewport({ scale: cssScale });
+      const viewport = page.getViewport({ scale: cssScale * pixelRatio });
       const canvas = document.createElement("canvas");
       canvas.width = Math.floor(viewport.width);
       canvas.height = Math.floor(viewport.height);
       holder.style.aspectRatio = unscaled.width + " / " + unscaled.height;
       holder.replaceChildren(canvas);
-      return page.render({
-        canvasContext: canvas.getContext("2d"),
-        viewport: viewport
-      }).promise;
+      return page
+        .render({
+          canvasContext: canvas.getContext("2d"),
+          viewport: viewport
+        })
+        .promise.then(function () {
+          return addLinkLayer(page, holder, cssViewport, token);
+        });
     });
   }
 
